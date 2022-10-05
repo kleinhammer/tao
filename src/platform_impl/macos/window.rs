@@ -496,6 +496,7 @@ impl UnownedWindow {
     let fullscreen = win_attribs.fullscreen.take();
     let maximized = win_attribs.maximized;
     let visible = win_attribs.visible;
+    let focused = win_attribs.focused;
     let decorations = win_attribs.decorations;
     let inner_rect = win_attribs
       .inner_size
@@ -534,8 +535,12 @@ impl UnownedWindow {
     // state, since otherwise we'll briefly see the window at normal size
     // before it transitions.
     if visible {
-      // Tightly linked with `app_state::window_activation_hack`
-      unsafe { window.ns_window.makeKeyAndOrderFront_(nil) };
+      if focused {
+        // Tightly linked with `app_state::window_activation_hack`
+        unsafe { window.ns_window.makeKeyAndOrderFront_(nil) };
+      } else {
+        unsafe { window.ns_window.orderFront_(nil) };
+      }
     }
 
     if maximized {
@@ -562,6 +567,13 @@ impl UnownedWindow {
   pub fn set_title(&self, title: &str) {
     unsafe {
       util::set_title_async(*self.ns_window, title.to_string());
+    }
+  }
+
+  pub fn title(&self) -> Option<String> {
+    unsafe {
+      let title = self.ns_window.title();
+      Some(ns_string_to_rust(title))
     }
   }
 
@@ -1414,6 +1426,19 @@ impl WindowExtMacOS for UnownedWindow {
       self
         .ns_window
         .setHasShadow_(if has_shadow { YES } else { NO })
+    }
+  }
+
+  #[inline]
+  fn set_is_document_edited(&self, edited: bool) {
+    unsafe { self.ns_window.setDocumentEdited_(edited) }
+  }
+
+  #[inline]
+  fn is_document_edited(&self) -> bool {
+    unsafe {
+      let is_document_edited: BOOL = msg_send![*self.ns_window, isDocumentEdited];
+      is_document_edited == YES
     }
   }
 }

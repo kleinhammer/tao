@@ -147,6 +147,13 @@ impl Window {
     }
   }
 
+  pub fn title(&self) -> Option<String> {
+    let s = unsafe { GetWindowTextLengthW(self.window.0) };
+    let mut buf = vec![0; s as usize];
+    unsafe { GetWindowTextW(self.window.0, &mut buf) };
+    Some(String::from_utf16_lossy(&buf[..(s - 1) as _]))
+  }
+
   // TODO (lemarier): allow menu update
   pub fn set_menu(&self, _new_menu: Option<menu::Menu>) {}
 
@@ -908,6 +915,8 @@ unsafe fn init<T: 'static>(
   window_flags.set(WindowFlags::TRANSPARENT, attributes.transparent);
   // WindowFlags::VISIBLE and MAXIMIZED are set down below after the window has been configured.
   window_flags.set(WindowFlags::RESIZABLE, attributes.resizable);
+
+  window_flags.set(WindowFlags::MARKER_DONT_FOCUS, !attributes.focused);
 
   let parent = match pl_attribs.parent {
     Parent::ChildOf(parent) => {
