@@ -316,6 +316,23 @@ impl Window {
     });
   }
 
+  #[inline]
+  pub fn set_minimizable(&self, minimizable: bool) {
+    let window = self.window.clone();
+    let window_state = Arc::clone(&self.window_state);
+
+    self.thread_executor.execute_in_thread(move || {
+      WindowState::set_window_flags(window_state.lock(), window.0, |f| {
+        f.set(WindowFlags::MINIMIZABLE, minimizable)
+      })
+    })
+  }
+
+  #[inline]
+  pub fn set_closable(&self, _closable: bool) {
+    warn!("`Window::set_closable` is ignored on Windows")
+  }
+
   /// Returns the `hwnd` of this window.
   #[inline]
   pub fn hwnd(&self) -> HWND {
@@ -485,6 +502,18 @@ impl Window {
   pub fn is_resizable(&self) -> bool {
     let window_state = self.window_state.lock();
     window_state.window_flags.contains(WindowFlags::RESIZABLE)
+  }
+
+  #[inline]
+  pub fn is_minimizable(&self) -> bool {
+    let window_state = self.window_state.lock();
+    window_state.window_flags.contains(WindowFlags::MINIMIZABLE)
+  }
+
+  #[inline]
+  pub fn is_closable(&self) -> bool {
+    warn!("`Window::is_closable` is ignored on Windows");
+    false
   }
 
   #[inline]

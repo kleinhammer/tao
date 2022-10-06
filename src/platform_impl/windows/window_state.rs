@@ -82,6 +82,7 @@ bitflags! {
         const POPUP            = 1 << 9;
         const ALWAYS_ON_BOTTOM = 1 << 10;
 
+
         /// Marker flag for fullscreen. Should always match `WindowState::fullscreen`, but is
         /// included here to make masking easier.
         const MARKER_EXCLUSIVE_FULLSCREEN = 1 << 11;
@@ -101,6 +102,8 @@ bitflags! {
         const MINIMIZED = 1 << 16;
 
         const IGNORE_CURSOR_EVENT = 1 << 17;
+
+        const MINIMIZABLE      = 1 << 18;
 
         const EXCLUSIVE_FULLSCREEN_OR_MASK = WindowFlags::ALWAYS_ON_TOP.bits;
     }
@@ -221,11 +224,14 @@ impl WindowFlags {
 
   pub fn to_window_styles(self) -> (WINDOW_STYLE, WINDOW_EX_STYLE) {
     let (mut style, mut style_ex) = (Default::default(), Default::default());
-    style |= WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX;
+    style |= WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION;
     style_ex |= WS_EX_ACCEPTFILES;
 
     if self.contains(WindowFlags::RESIZABLE) {
       style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
+    }
+    if self.contains(WindowFlags::MINIMIZABLE) {
+      style |= WS_MINIMIZEBOX;
     }
     if self.contains(WindowFlags::DECORATIONS) {
       style_ex |= WS_EX_WINDOWEDGE;
